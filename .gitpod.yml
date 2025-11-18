@@ -1,8 +1,0 @@
-image: gitpod/workspace-full
-
-tasks:
-  - init: cp .env.example .env || true
-    command: docker-compose up --build
-ports:
-  - port: 8000
-    onOpen: open-preview
