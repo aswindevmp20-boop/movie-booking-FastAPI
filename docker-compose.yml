@@ -1,31 +1,24 @@
-version: '3.8'
-
+version: '3.9'
 services:
-  # 1. FastAPI Application Service (Web API)
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: booking_api
-    restart: always
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: booker
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: bookings
+    ports:
+      - "5432:5432"
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+  api:
+    build: .
+    depends_on:
+      - postgres
+      - redis
     ports:
       - "8000:8000"
     environment:
-      # These environment variables come from Gitpod's workspace secrets
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
-
-  # 2. Celery Worker Service (Background Tasks)
-  celery_worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: booking_celery_worker
-    restart: always
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
-    # Overrides the default CMD to start the Celery worker process
-    command: celery -A src.tasks worker -l info
-    depends_on:
-      - app
+      - DATABASE_URL=postgresql+asyncpg://booker:secret@postgres:5432/bookings
+      - REDIS_URL=redis://redis:6379/0
