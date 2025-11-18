@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  # 1. FastAPI Application Service (Web API)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: booking_api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      # These environment variables come from Gitpod's workspace secrets
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+
+  # 2. Celery Worker Service (Background Tasks)
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: booking_celery_worker
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+    # Overrides the default CMD to start the Celery worker process
+    command: celery -A src.tasks worker -l info
+    depends_on:
+      - app

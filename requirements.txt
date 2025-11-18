@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pydantic[email]
+asyncpg # PostgreSQL driver for async connection (for NeonDB)
+sqlalchemy[asyncio] # SQLAlchemy 2.0+ for async ORM/models
+alembic # Database migrations tool
+python-jose[cryptography] # JWT handling
+passlib[bcrypt] # Password hashing
+redis # For direct Redis connection (optional, but good practice)
+celery[redis] # Distributed task queue (requires redis extras for Upstash)
