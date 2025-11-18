@@ -8,17 +8,30 @@ services:
       POSTGRES_DB: bookings
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   redis:
     image: redis:7
     ports:
       - "6379:6379"
+
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     depends_on:
       - postgres
       - redis
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://booker:secret@postgres:5432/bookings
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
+    volumes:
+      - ./:/usr/src/app
+
+volumes:
+  postgres_data:

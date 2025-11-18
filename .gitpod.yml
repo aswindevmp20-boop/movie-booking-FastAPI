@@ -1,14 +1,8 @@
-# Tasks to run when the workspace starts
-tasks:
-  - name: Build and Run Services
-    init: |
-      # Install python dependencies for local tooling (like Alembic)
-      pip install -r requirements.txt
-      echo "--- IMPORTANT: Ensure DATABASE_URL and REDIS_URL are set as Gitpod secrets ---"
-    command: docker-compose up --build
+image: gitpod/workspace-full
 
-# Ports to expose and open for external access
+tasks:
+  - init: cp .env.example .env || true
+    command: docker-compose up --build
 ports:
   - port: 8000
-    onOpen: open-browser # Open the FastAPI Swagger UI in a new tab
-    name: FastAPI API
+    onOpen: open-preview
