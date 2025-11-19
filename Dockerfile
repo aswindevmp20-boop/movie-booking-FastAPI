@@ -1,5 +1,12 @@
 FROM python:3.11-slim
 
+# Install required system packages for bcrypt + passlib
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libffi-dev \
+    python3-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY requirements.txt .

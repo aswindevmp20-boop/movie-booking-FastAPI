@@ -18,18 +18,21 @@ services:
       - "6379:6379"
 
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    depends_on:
-      - postgres
-      - redis
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    volumes:
-      - .:/app
+      build:
+        context: .
+        dockerfile: Dockerfile
+      depends_on:
+        - postgres
+        - redis
+      ports:
+        - "8000:8000"
+      environment:
+        DATABASE_URL: postgresql+asyncpg://booker:secret@postgres:5432/bookings
+        REDIS_URL: redis://redis:6379/0
+      env_file:
+        - .env
+      volumes:
+        - .:/app
 
 volumes:
   postgres_data:

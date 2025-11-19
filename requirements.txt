@@ -5,9 +5,12 @@ asyncpg
 alembic
 pydantic
 python-jose
-passlib[bcrypt]
 aioredis
 celery
 pytest
 pytest-asyncio
 httpx
+pydantic[email]
+argon2-cffi
+
+

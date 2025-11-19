@@ -14,3 +14,15 @@ Add “Getting Started” section describing docker-compose up
 Mention that project runs in Gitpod/Cloud
 
 Add “Stack” section listing FastAPI, Postgres, Redis, Celery, Docker etc.
+
+
+
+
+To rebuild Docker :-
+
+docker-compose down
+docker-compose up --build -d
+
+To check error while running fastapi:-
+
+docker-compose logs api --tail=20
