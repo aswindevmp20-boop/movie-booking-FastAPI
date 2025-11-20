@@ -50,6 +50,7 @@ class Show(Base):
 
     movie = relationship("Movie", back_populates="shows")
     theatre = relationship("Theatre", back_populates="shows")
+    seats = relationship("ShowSeat", cascade="all, delete", backref="show")
 
 
 class Seat(Base):
@@ -62,3 +63,12 @@ class Seat(Base):
     status = Column(String(20), default="available")  # not per show yet
 
     theatre = relationship("Theatre", back_populates="seats")
+
+class ShowSeat(Base):
+    __tablename__ = "show_seats"
+
+    id = Column(Integer, primary_key=True)
+    show_id = Column(Integer, ForeignKey("shows.id", ondelete="CASCADE"), nullable=False)
+    row = Column(String(5), nullable=False)
+    number = Column(Integer, nullable=False)
+    status = Column(String(20), default="available")  # available/booked/locked
