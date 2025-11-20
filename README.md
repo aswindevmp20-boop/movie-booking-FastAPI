@@ -21,6 +21,8 @@ Add “Stack” section listing FastAPI, Postgres, Redis, Celery, Docker etc.
 To rebuild Docker :-
 
 docker-compose down
+docker-compose up --build -d
+
 docker-compose up --build
 
 To check error while running fastapi:-

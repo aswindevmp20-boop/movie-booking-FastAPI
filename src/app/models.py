@@ -35,7 +35,8 @@ class Theatre(Base):
     name = Column(String(255), nullable=False)
     location = Column(String(255), nullable=False)
 
-    shows = relationship("Show", back_populates="theatre")   # ONLY THIS
+    shows = relationship("Show", back_populates="theatre")
+    seats = relationship("Seat", back_populates="theatre", cascade="all, delete")  
 
 
 class Show(Base):
@@ -49,3 +50,15 @@ class Show(Base):
 
     movie = relationship("Movie", back_populates="shows")
     theatre = relationship("Theatre", back_populates="shows")
+
+
+class Seat(Base):
+    __tablename__ = "seats"
+
+    id = Column(Integer, primary_key=True)
+    theatre_id = Column(Integer, ForeignKey("theatres.id", ondelete="CASCADE"))
+    row = Column(String(5), nullable=False)
+    number = Column(Integer, nullable=False)
+    status = Column(String(20), default="available")  # not per show yet
+
+    theatre = relationship("Theatre", back_populates="seats")
