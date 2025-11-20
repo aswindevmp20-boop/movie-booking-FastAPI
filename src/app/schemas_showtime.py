@@ -38,10 +38,8 @@ class ShowCreate(ShowBase):
 
 
 class ShowUpdate(BaseModel):
-    movie_id: Optional[int] = None
-    theatre_id: Optional[int] = None
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
 
 
 class ShowRead(ShowBase):

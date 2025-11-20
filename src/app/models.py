@@ -1,7 +1,8 @@
 from sqlalchemy.orm import declarative_base, relationship
-from sqlalchemy import Column, Integer, String, DateTime, func, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey
 
 Base = declarative_base()
+
 
 class User(Base):
     __tablename__ = "users"
@@ -20,7 +21,7 @@ class Movie(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     description = Column(String(500))
-    duration = Column(Integer, nullable=False)  # minutes
+    duration = Column(Integer, nullable=False)
     release_date = Column(DateTime(timezone=True))
     rating = Column(String(10))
 
@@ -34,7 +35,7 @@ class Theatre(Base):
     name = Column(String(255), nullable=False)
     location = Column(String(255), nullable=False)
 
-    shows = relationship("Show", back_populates="theatre")
+    shows = relationship("Show", back_populates="theatre")   # ONLY THIS
 
 
 class Show(Base):
@@ -48,27 +49,3 @@ class Show(Base):
 
     movie = relationship("Movie", back_populates="shows")
     theatre = relationship("Theatre", back_populates="shows")
-    seats = relationship("Seat", back_populates="show")
-
-
-class Seat(Base):
-    __tablename__ = "seats"
-
-    id = Column(Integer, primary_key=True, index=True)
-    show_id = Column(Integer, ForeignKey("shows.id"), nullable=False)
-    seat_number = Column(String(10), nullable=False)
-    is_available = Column(Boolean, default=True)
-
-    show = relationship("Show", back_populates="seats")
-
-
-class Booking(Base):
-    __tablename__ = "bookings"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    show_id = Column(Integer, ForeignKey("shows.id"))
-    seat_number = Column(String(10), nullable=False)
-    status = Column(String(20), default="booked")
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
