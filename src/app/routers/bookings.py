@@ -118,76 +118,82 @@ async def reserve_seats(
 
 # ---------- Confirm reservation (simulate payment) ----------
 @router.post("/confirm")
-async def confirm_reservation(booking_ids: List[int], db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
+async def confirm_reservation(
+    booking_ids: List[int],
+    db: AsyncSession = Depends(get_db),
+    user=Depends(get_current_user)
+):
     if not booking_ids:
         raise HTTPException(status_code=400, detail="No bookings provided")
 
     async with db.begin():
-        q = select(Booking).where(Booking.id.in_(booking_ids), Booking.user_id == user.id).with_for_update()
-        res = await db.execute(q)
-        bookings = res.scalars().all()
+        q = select(Booking).where(Booking.id.in_(booking_ids), Booking.user_id == user["id"]).with_for_update()
+        result = await db.execute(q)
+        bookings = result.scalars().all()
+
         if len(bookings) != len(booking_ids):
-            raise HTTPException(status_code=404, detail="Some bookings not found")
+            raise HTTPException(status_code=404, detail="Some bookings not found for this user")
 
         for bk in bookings:
-            # ensure seat is in locked state and booking pending
-            seat = await db.get(ShowSeat, bk.show_seat_id)
-            if seat is None:
-                raise HTTPException(status_code=404, detail="ShowSeat not found")
-            if seat.status != "locked" or bk.status != BookingStatus.PENDING:
-                raise HTTPException(status_code=409, detail=f"Seat {seat.id} not in locked state")
+            if bk.status != BookingStatus.PENDING.value:
+                raise HTTPException(status_code=400, detail=f"Booking {bk.id} not pending")
 
-            # mark seat booked & booking confirmed
+            seat = await db.get(ShowSeat, bk.show_seat_id)
+            if not seat:
+                raise HTTPException(status_code=404, detail=f"Seat {bk.show_seat_id} not found")
+
             seat.status = "booked"
-            bk.status = BookingStatus.CONFIRMED
+            bk.status = BookingStatus.CONFIRMED.value
             db.add(seat)
             db.add(bk)
 
-    # release redis locks for seats (use stored lock token)
+    # Release redis locks
     for bk in bookings:
         if bk.lock_token:
             await release_lock(lock_key_for_seat(bk.show_id, bk.show_seat_id), bk.lock_token)
 
-    return {"message": "Booking confirmed", "bookings": [b.id for b in bookings]}
-
+    return {"message": "Booking confirmed", "bookings": [bk.id for bk in bookings]}
 
 # ---------- Cancel reservation ----------
 @router.post("/cancel")
-async def cancel_reservation(booking_ids: List[int], db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
+async def cancel_reservation(
+    booking_ids: List[int],
+    db: AsyncSession = Depends(get_db),
+    user=Depends(get_current_user)
+):
     if not booking_ids:
         raise HTTPException(status_code=400, detail="No bookings provided")
 
     async with db.begin():
-        q = select(Booking).where(Booking.id.in_(booking_ids), Booking.user_id == user.id).with_for_update()
-        res = await db.execute(q)
-        bookings = res.scalars().all()
+        q = select(Booking).where(Booking.id.in_(booking_ids), Booking.user_id == user["id"]).with_for_update()
+        result = await db.execute(q)
+        bookings = result.scalars().all()
+
         if not bookings:
             raise HTTPException(status_code=404, detail="Bookings not found")
 
         for bk in bookings:
-            if bk.status == BookingStatus.CONFIRMED:
-                raise HTTPException(status_code=400, detail="Cannot cancel confirmed booking via this endpoint")
+            if bk.status != BookingStatus.PENDING.value:
+                raise HTTPException(status_code=400, detail=f"Cannot cancel booking {bk.id}, already {bk.status}")
 
-            # set seat back to available
             seat = await db.get(ShowSeat, bk.show_seat_id)
             if seat:
                 seat.status = "available"
                 db.add(seat)
 
-            bk.status = BookingStatus.CANCELLED
+            bk.status = BookingStatus.CANCELLED.value
             db.add(bk)
 
-    # release redis locks if token present
     for bk in bookings:
         if bk.lock_token:
             await release_lock(lock_key_for_seat(bk.show_id, bk.show_seat_id), bk.lock_token)
 
-    return {"message": "Cancelled", "bookings": [b.id for b in bookings]}
+    return {"message": "Cancelled", "bookings": [bk.id for bk in bookings]}
 
 
 # ---------- User bookings ----------
 @router.get("/me")
 async def my_bookings(db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
-    q = select(Booking).where(Booking.user_id == user.id)
+    q = select(Booking).where(Booking.user_id == user["id"])
     res = await db.execute(q)
     return res.scalars().all()
