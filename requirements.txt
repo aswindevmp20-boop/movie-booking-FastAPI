@@ -12,5 +12,6 @@ pytest-asyncio
 httpx
 pydantic[email]
 argon2-cffi
-
+redis>=4.5.0
+python-multipart
 

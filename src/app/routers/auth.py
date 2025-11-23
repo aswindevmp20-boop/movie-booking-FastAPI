@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-
+from fastapi.security import OAuth2PasswordRequestForm
 from src.app.db import AsyncSessionLocal
 from src.app.models import User
 from src.app.schemas import UserCreate, UserRead, Token, UserLogin
@@ -40,15 +40,26 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     return user
 
 
-@router.post("/login", response_model=Token)
-async def login(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
-    query = await db.execute(select(User).where(User.email == user_in.email))
-    user = query.scalars().first()
+@router.post("/login")
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db)
+):
+    q = select(User).where(User.email == form_data.username)
+    res = await db.execute(q)
+    user = res.scalar_one_or_none()
 
-    if not user or not verify_password(user_in.password, user.hashed_password):
+    if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    access = create_access_token(user.id)
-    refresh = create_refresh_token(user.id)
+    # ✅ Create both tokens properly
+    access_token = create_access_token({"sub": str(user.id)})
+    refresh_token = create_refresh_token({"sub": str(user.id)})
 
-    return Token(access_token=access, refresh_token=refresh)
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
+
+

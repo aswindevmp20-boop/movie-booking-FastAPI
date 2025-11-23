@@ -17,10 +17,14 @@ def verify_password(password: str, hashed: str) -> bool:
     except Exception:
         return False
 
-def create_access_token(user_id: int) -> str:
+def create_access_token(data: dict):
+    to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=15)
-    return jwt.encode({"sub": str(user_id), "exp": expire}, ACCESS_SECRET, algorithm="HS256")
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, ACCESS_SECRET, algorithm="HS256")
 
-def create_refresh_token(user_id: int) -> str:
+def create_refresh_token(data: dict):
+    to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(days=7)
-    return jwt.encode({"sub": str(user_id), "exp": expire}, REFRESH_SECRET, algorithm="HS256")
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, REFRESH_SECRET, algorithm="HS256")

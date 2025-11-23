@@ -1,5 +1,7 @@
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey
+# from sqlalchemy import Enum
+from enum import Enum
 
 Base = declarative_base()
 
@@ -72,3 +74,20 @@ class ShowSeat(Base):
     row = Column(String(5), nullable=False)
     number = Column(Integer, nullable=False)
     status = Column(String(20), default="available")  # available/booked/locked
+
+class BookingStatus(str, Enum):
+    PENDING = "PENDING"
+    CONFIRMED = "CONFIRMED"
+    CANCELLED = "CANCELLED"
+
+class Booking(Base):
+    __tablename__ = "bookings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    show_id = Column(Integer, ForeignKey("shows.id"), nullable=False)
+    show_seat_id = Column(Integer, ForeignKey("show_seats.id"), nullable=False)
+    status = Column(String(20), nullable=False, default=BookingStatus.PENDING.value)
+    lock_token = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
