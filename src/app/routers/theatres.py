@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from src.app.dependencies import get_current_user, require_role
 
 from src.app.db import AsyncSessionLocal
 from src.app.models import Theatre
@@ -13,7 +14,7 @@ async def get_db():
         yield session
 
 
-@router.post("/", response_model=TheatreRead)
+@router.post("/", response_model=TheatreRead, dependencies=[Depends(require_role("admin"))])
 async def create_theatre(theatre_in: TheatreCreate, db: AsyncSession = Depends(get_db)):
     theatre = Theatre(**theatre_in.dict())
     db.add(theatre)
@@ -22,13 +23,13 @@ async def create_theatre(theatre_in: TheatreCreate, db: AsyncSession = Depends(g
     return theatre
 
 
-@router.get("/", response_model=list[TheatreRead])
+@router.get("/", response_model=list[TheatreRead], dependencies=[Depends(require_role("admin"))])
 async def list_theatres(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Theatre))
     return result.scalars().all()
 
 
-@router.get("/{theatre_id}", response_model=TheatreRead)
+@router.get("/{theatre_id}", response_model=TheatreRead, dependencies=[Depends(require_role("admin"))])
 async def get_theatre(theatre_id: int, db: AsyncSession = Depends(get_db)):
     theatre = await db.get(Theatre, theatre_id)
     if not theatre:
@@ -36,7 +37,7 @@ async def get_theatre(theatre_id: int, db: AsyncSession = Depends(get_db)):
     return theatre
 
 
-@router.put("/{theatre_id}", response_model=TheatreRead)
+@router.put("/{theatre_id}", response_model=TheatreRead, dependencies=[Depends(require_role("admin"))])
 async def update_theatre(theatre_id: int, theatre_in: TheatreUpdate, db: AsyncSession = Depends(get_db)):
     theatre = await db.get(Theatre, theatre_id)
     if not theatre:
@@ -51,7 +52,7 @@ async def update_theatre(theatre_id: int, theatre_in: TheatreUpdate, db: AsyncSe
     return theatre
 
 
-@router.delete("/{theatre_id}")
+@router.delete("/{theatre_id}", dependencies=[Depends(require_role("admin"))])
 async def delete_theatre(theatre_id: int, db: AsyncSession = Depends(get_db)):
     theatre = await db.get(Theatre, theatre_id)
     if not theatre:

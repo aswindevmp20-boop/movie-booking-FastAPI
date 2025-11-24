@@ -30,7 +30,8 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     user = User(
         username=user_in.username,
         email=user_in.email,
-        hashed_password=hashed
+        hashed_password=hashed,
+        role=user_in.role
     )
 
     db.add(user)
@@ -53,8 +54,8 @@ async def login(
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     # ✅ Create both tokens properly
-    access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    access_token = create_access_token({"sub": str(user.id), "role": user.role})
+    refresh_token = create_refresh_token({"sub": str(user.id), "role": user.role})
 
     return {
         "access_token": access_token,

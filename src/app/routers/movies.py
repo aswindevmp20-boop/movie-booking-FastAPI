@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from src.app.dependencies import get_current_user, require_role
 
 from src.app.db import AsyncSessionLocal
 from src.app.models import Movie
@@ -13,7 +14,7 @@ async def get_db():
         yield session
 
 
-@router.post("/", response_model=MovieRead)
+@router.post("/", response_model=MovieRead, dependencies=[Depends(require_role("admin"))])
 async def create_movie(movie_in: MovieCreate, db: AsyncSession = Depends(get_db)):
 
     movie = Movie(**movie_in.dict())
@@ -24,7 +25,7 @@ async def create_movie(movie_in: MovieCreate, db: AsyncSession = Depends(get_db)
     return movie
 
 
-@router.get("/", response_model=list[MovieRead])
+@router.get("/", response_model=list[MovieRead], dependencies=[Depends(require_role("admin"))])
 async def list_movies(
     db: AsyncSession = Depends(get_db),
     search: str | None = None,
@@ -51,7 +52,7 @@ async def list_movies(
     return movies
 
 
-@router.get("/{movie_id}", response_model=MovieRead)
+@router.get("/{movie_id}", response_model=MovieRead, dependencies=[Depends(require_role("admin"))])
 async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await db.get(Movie, movie_id)
 
@@ -60,7 +61,7 @@ async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
 
     return movie
 
-@router.put("/{movie_id}", response_model=MovieRead)
+@router.put("/{movie_id}", response_model=MovieRead, dependencies=[Depends(require_role("admin"))])
 async def update_movie(movie_id: int, movie_in: MovieUpdate, db: AsyncSession = Depends(get_db)):
     movie = await db.get(Movie, movie_id)
     if not movie:
@@ -77,7 +78,7 @@ async def update_movie(movie_id: int, movie_in: MovieUpdate, db: AsyncSession = 
     return movie
 
 
-@router.delete("/{movie_id}")
+@router.delete("/{movie_id}", dependencies=[Depends(require_role("admin"))])
 async def delete_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await db.get(Movie, movie_id)
     if not movie:

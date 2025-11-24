@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from src.app.dependencies import get_current_user, require_role
 
 from src.app.db import AsyncSessionLocal
 from src.app.models import Show, Movie, Theatre
@@ -14,7 +15,7 @@ async def get_db():
 
 
 # ----- Create Show -----
-@router.post("/", response_model=ShowRead)
+@router.post("/", response_model=ShowRead, dependencies=[Depends(require_role("admin"))])
 async def create_show(show_in: ShowCreate, db: AsyncSession = Depends(get_db)):
 
     # ensure movie exists
@@ -34,14 +35,14 @@ async def create_show(show_in: ShowCreate, db: AsyncSession = Depends(get_db)):
 
 
 # ----- List Shows -----
-@router.get("/", response_model=list[ShowRead])
+@router.get("/", response_model=list[ShowRead], dependencies=[Depends(require_role("admin"))])
 async def list_shows(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Show))
     return result.scalars().all()
 
 
 # ----- Get Show -----
-@router.get("/{show_id}", response_model=ShowRead)
+@router.get("/{show_id}", response_model=ShowRead, dependencies=[Depends(require_role("admin"))])
 async def get_show(show_id: int, db: AsyncSession = Depends(get_db)):
     show = await db.get(Show, show_id)
     if not show:
@@ -50,7 +51,7 @@ async def get_show(show_id: int, db: AsyncSession = Depends(get_db)):
 
 
 # ----- Update Show -----
-@router.put("/{show_id}", response_model=ShowRead)
+@router.put("/{show_id}", response_model=ShowRead, dependencies=[Depends(require_role("admin"))])
 async def update_show(show_id: int, show_in: ShowUpdate, db: AsyncSession = Depends(get_db)):
     show = await db.get(Show, show_id)
     if not show:
@@ -66,7 +67,7 @@ async def update_show(show_id: int, show_in: ShowUpdate, db: AsyncSession = Depe
 
 
 # ----- Delete Show -----
-@router.delete("/{show_id}")
+@router.delete("/{show_id}", dependencies=[Depends(require_role("admin"))])
 async def delete_show(show_id: int, db: AsyncSession = Depends(get_db)):
     show = await db.get(Show, show_id)
     if not show:
