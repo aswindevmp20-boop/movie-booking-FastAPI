@@ -48,3 +48,17 @@ async def generate_show_seats(show_id: int, db: AsyncSession = Depends(get_db)):
 async def list_show_seats(show_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(ShowSeat).where(ShowSeat.show_id == show_id))
     return result.scalars().all()
+
+# Seat Availability for a show
+@router.get("/{show_id}/seats")
+async def get_show_seats(show_id: int, db: AsyncSession = Depends(get_db)):
+    """Return all seats for a given show with their current status."""
+    result = await db.execute(select(ShowSeat).where(ShowSeat.show_id == show_id))
+    seats = result.scalars().all()
+    if not seats:
+        raise HTTPException(status_code=404, detail="Show not found or no seats available")
+
+    return [
+        {"id": s.id, "row": s.row, "number": s.number, "status": s.status}
+        for s in seats
+    ]
